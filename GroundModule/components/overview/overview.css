@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+body {
+  background: black;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  color: white;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-right: 30px;
+  margin-left: 10px;
+}
+
+.row {
+  display: flex;
+  flex-grow: 1;
+}
+
+.header {
+  background: black;
+  height: 10vh;
+  font-size:30px;
+  color: white;
+  text-align:center;
+  font-weight: bold;
+  font-family: 'Roboto', sans-serif;
+}
+
+.button {
+  background-color: green; /*test*/
+  margin-top: 10px;
+}
+
+.telemetry-overview {
+  background: white;
+  color: black;
+}
+
+.telemetry-overview-command-bar {
+  max-width: 35%;
+}
+
+.telemetry-overview-status-bar {
+  display: flex;
+  flex-direction: row;
+  height: 2rem;
+}
+
