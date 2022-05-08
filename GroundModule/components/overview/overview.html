@@ -15,6 +15,7 @@
                 <button onclick="sendCommand('CMD,2764,CX,ON')">Start Container Telemetry</button>
                 <button onclick="sendCommand('CMD,2764,CX,OFF')">Stop Container Telemetry</button>
                 <button onclick="sendCommand('CMD,2764,SP1X,ON')">Start Payload Telemetry</button>
+                <button onclick="sendCommand('CMD,2764,SP1X,OFF')">Stop Payload Telemetry</button>  <!-- stop payload necesario? -->
                 <button onclick="sendContainerSetTimeCommand()">Set current container time</button>
                 <button onclick="sendCommand('CMD,2764,SIM,ENABLE')">SIM mode enable</button>
                 <button onclick="sendCommand('CMD,2764,SIM,ACTIVATE')">SIM mode activate</button>
@@ -41,10 +42,10 @@
             </div>
             <div class="telemetry-overview">
                 <p>Payload Telemetry</p>
-                <canvas id="payload-1-telemetry-canvas"></canvas>
+                <canvas id="payload-telemetry-canvas"></canvas>
                 <div class="telemetry-overview-status-bar">
-                    <p id="payload-1-telemetry-temperature">Current temperature:</p>
-                    <p id="payload-1-telemetry-rotation-rate">Current rotation rate:</p>
+                    <p id="payload-telemetry-temperature">Current temperature:</p>
+                    <p id="payload-telemetry-rotation-rate">Current rotation rate:</p>
                 </div>
             </div>
         </div>

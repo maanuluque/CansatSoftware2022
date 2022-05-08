@@ -50,7 +50,7 @@ const containerTelemetryChartConfig = {
   }
 };
 
-const payload1TelemetryChartConfig = {
+const payloadTelemetryChartConfig = {
   type: 'line',
   data: {
     labels: ['00:00:00'],
@@ -67,53 +67,7 @@ const payload1TelemetryChartConfig = {
     mantainAspectRation: false,
     title: {
       display: true,
-      text: 'Container'
-    },
-    tooltips: {
-      mode: 'index',
-      intersect: false,
-    },
-    hover: {
-      mode: 'nearest',
-      intersect: true
-    },
-    scales: {
-      xAxes: [{
-        display: true,
-        scaleLabel: {
-          display: true,
-          labelString: 'Mission Time (hh/mm/ss)'
-        }
-      }],
-      yAxes: [{
-        display: true,
-        scaleLabel: {
-          display: true,
-          labelString: 'Altitude (m)'
-        }
-      }]
-    }
-  }
-};
-
-const payload2TelemetryChartConfig = {
-  type: 'line',
-  data: {
-    labels: ['00:00:00'],
-    datasets: [{
-      label: 'Altitude',
-      backgroundColor: 'rgb(255, 99, 132)', //Red
-      borderColor: 'rgb(255, 99, 132)', //Red
-      data: [0],
-      fill: false,
-    }]
-  },
-  options: {
-    responsive: true,
-    mantainAspectRation: false,
-    title: {
-      display: true,
-      text: 'Container'
+      text: 'Payload'
     },
     tooltips: {
       mode: 'index',
@@ -146,12 +100,8 @@ const payload2TelemetryChartConfig = {
 containerTelemetryCanvasCtx = document.getElementById('container-telemetry-canvas').getContext('2d');
 containerTelemetryChart = new chartjs.Chart(containerTelemetryCanvasCtx, containerTelemetryChartConfig);
 
-payload1TelemetryCanvasCtx = document.getElementById('payload-1-telemetry-canvas').getContext('2d');
-payload1TelemetryChart = new chartjs.Chart(payload1TelemetryCanvasCtx, payload1TelemetryChartConfig);
-
-payload2TelemetryCanvasCtx = document.getElementById('payload-2-telemetry-canvas').getContext('2d');
-payload2TelemetryChart = new chartjs.Chart(payload2TelemetryCanvasCtx, payload2TelemetryChartConfig);
-
+payloadTelemetryCanvasCtx = document.getElementById('payload-telemetry-canvas').getContext('2d');
+payloadTelemetryChart = new chartjs.Chart(payloadTelemetryCanvasCtx, payloadTelemetryChartConfig);
 
 
 function addValueToTelemetryChart(chart, value, label) {

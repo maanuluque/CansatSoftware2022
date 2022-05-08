@@ -3,10 +3,11 @@ var xbee_api = require('xbee-api');
 
 var C = xbee_api.constants;
 
+//actualizar
 const GROUND_MAC_ADDRESS = '0013A20041A7952C'; 
 const CONTAINER_MAC_ADDRESS = '0013A20041B11802';
-const PAYLOAD_1_MAC_ADDRESS = '0013A20041B118E0';
-const PAYLOAD_2_MAC_ADDRESS = '0013A2004191C55C';
+const PAYLOAD__MAC_ADDRESS = '0013A20041B118E0';
+
 
 var sendSimData = false;
 var simCommands = getSimCommandListFromFile();
@@ -91,30 +92,19 @@ function getUtcTimeStr() {
 
 function parsePacketAndAddValues(content) {
   const telemetryElements = content.split(',');
-  if (telemetryElements.length === 19) { // Received container telemetry
-    addValueToTelemetryChart(containerTelemetryChart, Number(telemetryElements[7]), telemetryElements[1]);
+  if (telemetryElements.length === 16) { // Received container telemetry
+    addValueToTelemetryChart(containerTelemetryChart, Number(telemetryElements[6]), telemetryElements[1]);
     addValueToTelemetryCsv(containerTelemetryWriteStream, content);
-    setCurrentTemperature('container-telemetry-temperature', telemetryElements[8]);
-    setCurrentBatteryVoltage('container-telemetry-battery-voltage', telemetryElements[9]);
-    setCurrentGPSCoords('container-telemetry-gps-coordinates', telemetryElements[11], telemetryElements[12]);
+    setCurrentTemperature('container-telemetry-temperature', telemetryElements[7]);
+    setCurrentBatteryVoltage('container-telemetry-battery-voltage', telemetryElements[8]);
+    setCurrentGPSCoords('container-telemetry-gps-coordinates', telemetryElements[10], telemetryElements[11]);
     publishMQTTMessage(content);
   } else { // Received payload telemetry
-    if (telemetryElements[3] === 'S1') {
       telemetryElements[1] = getUtcTimeStr();
-      addValueToTelemetryChart(payload1TelemetryChart, Number(telemetryElements[4]), telemetryElements[1]);
-      addValueToTelemetryCsv(payload1TelemetryWriteStream, content);
-      setCurrentTemperature('payload-1-telemetry-temperature', telemetryElements[5]);
-      setCurrentRotationRate('payload-1-telemetry-rotation-rate', telemetryElements[6]);
+      addValueToTelemetryChart(payloadTelemetryChart, Number(telemetryElements[4]), telemetryElements[1]);
+      addValueToTelemetryCsv(payloadelemetryWriteStream, content);
+      setCurrentTemperature('payload-telemetry-temperature', telemetryElements[5]);
+      setCurrentRotationRate('payload-telemetry-rotation-rate', telemetryElements[7]); //uso gyro_r
       publishMQTTMessage(content);
-    } else if (telemetryElements[3] === 'S2') {
-      addValueToTelemetryChart(payload2TelemetryChart, Number(telemetryElements[4]), telemetryElements[1]);
-      addValueToTelemetryCsv(payload2TelemetryWriteStream, content);
-      setCurrentTemperature('payload-2-telemetry-temperature', telemetryElements[5]);
-      setCurrentRotationRate('payload-2-telemetry-rotation-rate', telemetryElements[6]);
-      publishMQTTMessage(content);
-    } else {
-      console.log('Received invalid payload telemetry packet:');
-      console.log(telemetryElements[3]);
-    }
   }
 }

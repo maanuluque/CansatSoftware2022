@@ -2,6 +2,7 @@ var mqtt = require('mqtt');
 
 var mqttActivated = false;
 
+//actualizar cuando este la nuestra
 var client  = mqtt.connect({
   host: 'cansat.info',
   port: 1883,
@@ -38,7 +39,7 @@ function toggleMQTTActivated() {
   console.log('MQTT activated: ' + mqttActivated);
 }
 
-//Example telemetry '2764,0:01:32,10,C,F,N,N,645,18.2,8.98,20:54:33,42.30402,34.30402,699.3,3,STARTUP,0,0,CXON'
+//Example telemetry '6082,1:22:10,50,C,500.3,29.3,4.31,20,18,21,30,35,30,-133,-130,2600,0,STANDBY
 function publishMQTTMessage(message){
   client.publish(topic, message);
 }

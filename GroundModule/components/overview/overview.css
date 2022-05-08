@@ -1,12 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
 body {
-  background: black;
+  background:#77ADDB;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   margin: 0;
-  font-family: 'Roboto', sans-serif;
-  color: white;
 }
 
 .column {
@@ -23,13 +20,12 @@ body {
 }
 
 .header {
-  background: black;
+  background: #155083;
   height: 10vh;
   font-size:30px;
   color: white;
   text-align:center;
   font-weight: bold;
-  font-family: 'Roboto', sans-serif;
 }
 
 .button {
@@ -39,7 +35,6 @@ body {
 
 .telemetry-overview {
   background: white;
-  color: black;
 }
 
 .telemetry-overview-command-bar {
