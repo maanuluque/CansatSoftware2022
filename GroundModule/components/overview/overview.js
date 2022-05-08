@@ -121,9 +121,8 @@ function sendCustomCommand() {
 }
 
 function testAll() {
-  parsePacketAndAddValues('2764,00:01:32,10,C,F,N,N,700.2,18.2,8.98,20:54:33,42.30402,34.30402,699.3,3,STARTUP,42,43,CXON');
-  parsePacketAndAddValues('2764,00:00:00,0000,S1,   0.7,24.9,0000');
-  parsePacketAndAddValues('2764,00:00:00,0588,S2,  12.7,61.8,0000');
+  parsePacketAndAddValues('6082,00:01:30,50,C,F,N,500.3,29.3,4.42,15:48:02,36.3501,-3.3501,50.3,16,LANDED,CXON');
+  parsePacketAndAddValues('6082,01:22:10,50,C,500.3,29.3,4.31,20,18,21,30,35,30,-133,-130, 2600,0,STANDBY');
 }
 
 //testAll();
