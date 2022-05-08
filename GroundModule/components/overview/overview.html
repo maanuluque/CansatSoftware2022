@@ -12,14 +12,14 @@
         <div class="telemetry-overview-command-bar">
             <div class="column">
                 <h3>Container Commands</h3>
-                <button onclick="sendCommand('CMD,2764,CX,ON')">Start Container Telemetry</button>
-                <button onclick="sendCommand('CMD,2764,CX,OFF')">Stop Container Telemetry</button>
-                <button onclick="sendCommand('CMD,2764,SP1X,ON')">Start Payload Telemetry</button>
-                <button onclick="sendCommand('CMD,2764,SP1X,OFF')">Stop Payload Telemetry</button>  <!-- stop payload necesario? -->
+                <button onclick="sendCommand('CMD,6082,CX,ON')">Start Container Telemetry</button>
+                <button onclick="sendCommand('CMD,6082,CX,OFF')">Stop Container Telemetry</button>
+                <button onclick="sendCommand('CMD,6082,TPX,ON')">Start Payload Telemetry</button>
+                <button onclick="sendCommand('CMD,6082,TPX,OFF')">Stop Payload Telemetry</button>  <!-- stop payload necesario? -->
                 <button onclick="sendContainerSetTimeCommand()">Set current container time</button>
-                <button onclick="sendCommand('CMD,2764,SIM,ENABLE')">SIM mode enable</button>
-                <button onclick="sendCommand('CMD,2764,SIM,ACTIVATE')">SIM mode activate</button>
-                <button onclick="sendCommand('CMD,2764,SIM,DISABLE')">SIM mode disable</button>
+                <button onclick="sendCommand('CMD,6082,SIM,ENABLE')">SIM mode enable</button>
+                <button onclick="sendCommand('CMD,6082,SIM,ACTIVATE')">SIM mode activate</button>
+                <button onclick="sendCommand('CMD,6082,SIM,DISABLE')">SIM mode disable</button>
                 <input id="custom-command-input" type="text" placeholder="Custom Command...">
                 <button onclick="sendCustomCommand()">Send custom command</button>
             </div>
