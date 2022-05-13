@@ -1,4 +1,3 @@
-
 from uxbee import uxbee
 from common import *
 import ubinascii
@@ -17,7 +16,6 @@ x16bit_addr = ubinascii.unhexlify("7906")
 # Data in string -> is encoded before every send
 data = "[PACKET {}] {}"
 message = "Hello XBee!"
-
 
 print('GO')
 
