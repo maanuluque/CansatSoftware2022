@@ -1,44 +1,72 @@
 from machine import UART, Pin
 import ubinascii
+import time
+from common import *
+
 
 class uxbee:
-    
-    
-    def __init__(self, tx, rx, timeout): #tx 8, rx 9
+    def __init__(self, tx, rx, timeout): #8 9 2000 
         self.uart = UART(1, baudrate=9600, tx=Pin(tx), rx=Pin(rx), timeout=timeout)
+        self.received = 0
+        
+    def read_next_byte(self):
+        return self.uart.read(1)
+        
+    def wait_for_frame(self):
+        xbee_packet = bytearray()
+        byte = self.read_next_byte()
+        
+        # Add packet delimiter
+        xbee_packet += byte
+        if (xbee_packet[0] == 0x7E):
+            return self.wait_for_packet_length(xbee_packet)
+        else:
+            return None
+            
+    def wait_for_packet_length(self, xbee_packet):
+        length_packet = bytearray()
+        for _ in range(2):
+            length_packet += self.read_next_byte()
+        xbee_packet += length_packet
+        length = length_packet[0] << 8 | length_packet[1]
+        return self.wait_for_data(xbee_packet, length)
+        
+    def wait_for_data(self, xbee_packet, length):
+        # Add packet payload
+        for _ in range(length): 
+            xbee_packet += self.read_next_byte()
+            
+        # Add packet checksum
+        xbee_packet += self.read_next_byte()
+        
+        # Return packet
+        return self.get_packet(xbee_packet)
     
-    def send_packet(self, frame_id, dest_addr_64, dest_addr_16, data):
-        start_delimiter = "7E"
-        frame_type = "10"
+    def get_packet(self, packet_bytearray):
+        frame_type = packet_bytearray[3]
+        if (frame_type == 0x90):
+            return ReceivePacket.create_packet(packet_bytearray)
+        elif (frame_type == 0x8B):
+            return TransmitStatusPacket.create_packet(packet_bytearray)
+        elif (frame_type == 0x10):
+            return TransmitPacket.create_packet(packet_bytearray)
+        else:
+            return None
         
-        frame_hex = hex(frame_id).split('x')[-1]
-        if len(frame_hex) < 2:
-            frame_hex = '0' + frame_hex
+    def send_packet(self, frame_id, x64bit_addr, x16bit_addr, data):
+        data = data.encode()
+        packet = TransmitPacket(frame_id, x64bit_addr, x16bit_addr, 0, 0, data)
+        self.uart.write(packet.output())
         
-        data_hex = ubinascii.hexlify(data).decode('utf8')
-        frame_data = frame_type + frame_hex + dest_addr_64 + dest_addr_16 + "0000" + data_hex
+    def get_received(self):
+        return self.received
         
-        byte_data_len = int(len(frame_data) / 2)
-        hex_data_len = hex(byte_data_len).split('x')[-1]
-        
-        for i in range(len(hex_data_len), 4):
-            hex_data_len = "0" + hex_data_len
-        
-        frame_data = frame_data.encode()
-        n = 2
-        arr = [frame_data[i:i+n] for i in range(0, len(frame_data), n)]
-        hex_arr = [int(i, 16) for i in arr]
-        checksum_data_sum = hex(sum(hex_arr))
-        hex_sum = int("0x" + checksum_data_sum[-2:])
-        checksum = hex(0xFF - hex_sum).split('x')[-1]
-                
-        packet = start_delimiter + hex_data_len + frame_data.decode() + checksum
-        
-        packet_bin = ubinascii.unhexlify(packet)
-        
-        self.uart.write(packet_bin)
-        
-        
-        
+    def wait_for_read(self):
+        current = self.uart.any()
+        while (current == 0):
+            current = self.uart.any()
+            
+        self.received += 1
+        return self.wait_for_frame()
         
         
