@@ -14,17 +14,18 @@ def store_journal_data(team_id, mission_time, packet_type, mode, altitude, temp,
     
 # EEPROM methods
 def create():
-    variables = {
+    control_variables = {
         "current_state": "PRE-DEPLOY",
         "send_telemetry": "True",
         "send_payload_telemetry": "False",
         "package_count": "0",
         "simulation_mode": "False",
         "descend_payload": "null",
-        "tp_deploy_time": "null"
+        "tp_deploy_time": "null",
+        "hasReachApogee": "False"
     }
     with open("eeprom.json", "a") as eeprom:
-        eeprom.store(variables)
+        eeprom.store(control_variables)
         
 def store(variables):
     if "eeprom.json" not in os.listdir():
@@ -46,11 +47,11 @@ def modify(field, value):
     with open("eeprom.json", "w") as eeprom:
         json.dump(json_variables, eeprom)
 
-def get_variables():
+def get_control_variables():
     with open("eeprom.json", "r") as eeprom:
         json_variables = json.load(eeprom)
-    variables = json.loads(json_variables)
-    return variables
+    control_variables = json.loads(json_variables)
+    return control_variables
 
 # Journal data
 team_id = 1082

@@ -4,31 +4,57 @@
 
 import eeprom
 import xbee
-import bme280
+import bme280_float as bme280
 from mpu9250 import MPU9250
 
-## STARTUP
+## STARTUP STAGE
+
+# Initialize DEFINES
+FIRST_PARACHUTE_ALTITUDE = 670
+SECOND_PARACHUTE_ALTITUDE = 400
+PAYLOAD_DEPLOY_ALTITUDE = 300
+DELTA_ALT_ERROR = 0.8
 
 # Initialize sensors
+i2c_mpu = machine.I2C(1, scl=machine.Pin(3), sda=machine.Pin(2))
+mpu = MPU9250(i2c_mpu)
+i2c_bme = machine.I2C(1, scl=machine.Pin(11), sda=machine.Pin(10))
+bme = bme280.BME280(i2c=i2c_bme)
 
 # Recover data from eeprom
 if "eeprom.json" not in os.listdir():
     eeprom.create()
-eeprom_variables = eeprom.get_variables()
+eeprom_variables = eeprom.get_control_variables()
 
 current_state = eeprom_variables["current_state"]
 send_telemetry = eeprom_variables["send_telemetry"]
 send_payload_telemetry = eeprom_variables["send_payload_telemetry"]
-simulation_mode = eeprom_variables["sim_mode"]
+simulation_mode = eeprom_variables["simulation_mode"]
 package_count = int(eeprom_variables["package_count"])
+has_reach_apogee = eeprom_variables["hasReachApogee"]
+
+# Initialize useful variables
+last_altitude = None
+first_altitude_measure = True
 
 while(True):
     switch(current_state):
         case "PRE-DEPLOY":
             if simulation_mode == "False":
-                # Measure altitude
-                # if altitude < 300:
-                #   current_state = DEPLOY
+                altitude = bme.altitude
+            else:
+                # altitude = get_altitude_from_pressure() --> calculate altitude from sim barometric values
+            if last_altitude is None:
+                last_altitude = altitude
+                sleep_ms(500)
+                if simulation_mode == "False":
+                    altitude = bme.altitude
+                else:
+                    # altitude = get_altitude_from_pressure() --> calculate altitude from sim barometric values
+            if altitude < PAYLOAD_DEPLOY_ALTITUDE and has_reach_apogee == 'True':
+                # Initiate payload's descend
+                current_state = DEPLOY
+                eeprom.modify("current_state", "PAYLOAD_DEPLOY")
                 #   if descend_payload == 'null':
                 #     activate_payload_descend()
                 #     eeprom.modify("tp_deploy_time", RTC.current_time())
@@ -39,6 +65,10 @@ while(True):
                 #    package = takeMeasurementsAndStoreInEEPROM()
                 #    xbee.sendTelemetryToGround(package)
                 #    eeprom.modify("package_count", 1)
+            #if delta_time > 1 and send_telemetry == 'True':
+            #    package = takeMeasurementsAndStoreInEEPROM()
+            #    xbee.sendTelemetryToGround(package)
+            #    eeprom.modify("package_count", 1)
         case "PAYLOAD_DEPLOY":
             # if RTC.current_time() - tp_deploy_time < 20seg and descend_payload == 'True':
             #    eeprom.modify("descend_payload", "False")
@@ -61,6 +91,7 @@ while(True):
             #    package = takeMeasurementsAndStoreInEEPROM()
             #    xbee.sendTelemetryToGround(package)
             pass
+        # TODO: nunca debiera llegar al default --> nunca deberia ser null. chequear
         case default:
             current_state = "PRE_DEPLOY"
             pass
@@ -81,7 +112,6 @@ while(True):
         case "SIMP":
             pass
         case "TPX":
-            ## todo: check equality
             if send_payload_telemetry == "True":
                 send_payload_telemetry = "False"
             else:

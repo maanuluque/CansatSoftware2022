@@ -1,8 +1,8 @@
 import machine
-import bme280
+import bme280_float as bme280
 from time import sleep_ms
 
-i2c = machine.I2C(0, scl=machine.Pin(1), sda=machine.Pin(0))
+i2c = machine.I2C(1, scl=machine.Pin(11), sda=machine.Pin(10))
 bme = bme280.BME280(i2c=i2c)
 
 while(True):
