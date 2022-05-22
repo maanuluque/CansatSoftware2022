@@ -18,7 +18,7 @@ class XBeePacket():
         return 0xFF - (sum(self.get_frame_spec_data()) & 0xFF)
     
     def get_frame_data(self):
-        return self.data
+        return self.data.decode()
     
     def get_frame_spec_data(self):
         return None

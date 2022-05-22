@@ -68,5 +68,17 @@ class uxbee:
             
         self.received += 1
         return self.wait_for_frame()
-        
+
+    def read_command(self):
+        current = self.uart.any()
+        return current
+
+    def wait_for_simp(self):
+        wait = True
+        while wait:
+            packet = self.wait_for_read()
+            data = packet.get_frame_data().split(',')
+            if data[2] == 'SIMP':
+                wait = False
+        return data[3]
         
