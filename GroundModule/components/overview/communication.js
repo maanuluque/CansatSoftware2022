@@ -1,12 +1,12 @@
-var SerialPort = require('serialport');
+var {SerialPort} = require('serialport');
 var xbee_api = require('xbee-api');
 
 var C = xbee_api.constants;
 
 //actualizar
-const GROUND_MAC_ADDRESS = '0013A20041A7952C'; 
-const CONTAINER_MAC_ADDRESS = '0013A20041B11802';
-const PAYLOAD__MAC_ADDRESS = '0013A20041B118E0';
+const GROUND_MAC_ADDRESS = '0013A20041BA29C8'; 
+const CONTAINER_MAC_ADDRESS = '0013A20041BA3838';
+const PAYLOAD__MAC_ADDRESS = '0013A20041BA3838';
 
 
 var sendSimData = false;
@@ -14,13 +14,15 @@ var simCommands = getSimCommandListFromFile();
 var currentSimCommandIndex = 0;
 
 var xbeeAPI = new xbee_api.XBeeAPI({
-  api_mode: 2
+  api_mode: 1
 });
 
-var serialport = new SerialPort("COM3", {
-  baudRate: 9600,
-  parser: xbeeAPI.rawParser()
-});
+var serialport = new SerialPort({ path: "/dev/tty.usbserial-A50285BI", baudRate: 9600, parser: xbeeAPI.rawParser()})
+
+// var serialport = new SerialPort("COM3", {
+//   baudRate: 9600,
+//   parser: xbeeAPI.rawParser()
+// });
 
 serialport.on("open", function() {
   console.log("Serial port open... sending ATND");
@@ -32,7 +34,7 @@ serialport.on("open", function() {
 
   serialport.write(xbeeAPI.buildFrame(frame), function(err, res) {
     if (err) throw(err);
-    else     console.log(res);
+    else console.log(res);
   });
 });
 
@@ -41,6 +43,7 @@ serialport.on("open", function() {
 serialport.on('data', function (data) {
   xbeeAPI.parseRaw(data);
 })
+console.log("flowing mode on")
 
 xbeeAPI.on("frame_object", function(frame) {
   if (frame.data) parsePacketAndAddValues(String.fromCharCode.apply(null, frame.data));
@@ -102,7 +105,7 @@ function parsePacketAndAddValues(content) {
   } else { // Received payload telemetry
       telemetryElements[1] = getUtcTimeStr();
       addValueToTelemetryChart(payloadTelemetryChart, Number(telemetryElements[4]), telemetryElements[1]);
-      addValueToTelemetryCsv(payloadelemetryWriteStream, content);
+      addValueToTelemetryCsv(payloadTelemetryWriteStream, content);
       setCurrentTemperature('payload-telemetry-temperature', telemetryElements[5]);
       setCurrentRotationRate('payload-telemetry-rotation-rate', telemetryElements[7]); //uso gyro_r
       publishMQTTMessage(content);

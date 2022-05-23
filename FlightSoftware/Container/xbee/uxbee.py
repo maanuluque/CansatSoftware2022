@@ -1,10 +1,10 @@
 from machine import UART, Pin
 import ubinascii
 import time
-from common import *
+from xbee.common import *
 
 
-class uxbee:
+class Uxbee:
     def __init__(self, tx, rx, timeout): #8 9 2000 
         self.uart = UART(1, baudrate=9600, tx=Pin(tx), rx=Pin(rx), timeout=timeout)
         self.received = 0
@@ -44,8 +44,11 @@ class uxbee:
     
     def get_packet(self, packet_bytearray):
         frame_type = packet_bytearray[3]
+        #print("FRAME TYPE --> {}".format(frame_type))
         if (frame_type == 0x90):
             return ReceivePacket.create_packet(packet_bytearray)
+        elif (frame_type == 0x91):
+            return ExplicitRXIndicatorPacket.create_packet(packet_bytearray)
         elif (frame_type == 0x8B):
             return TransmitStatusPacket.create_packet(packet_bytearray)
         elif (frame_type == 0x10):
@@ -54,8 +57,11 @@ class uxbee:
             return None
         
     def send_packet(self, frame_id, x64bit_addr, x16bit_addr, data):
-        data = data.encode()
+        #print("XBEE: Data --> " + data)
+        data = data.encode("utf-8")
+        #print("XBEE: Encoded Data --> {}".format(data))
         packet = TransmitPacket(frame_id, x64bit_addr, x16bit_addr, 0, 0, data)
+        #print("XBEE: Packet --> {}".format(packet.output()))
         self.uart.write(packet.output())
         
     def get_received(self):

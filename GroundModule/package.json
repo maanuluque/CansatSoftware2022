@@ -24,6 +24,7 @@
     "xbee-api": "^0.6.0"
   },
   "build": {
-    "npmRebuild": false
+    "npmRebuild": true
   }
 }
+

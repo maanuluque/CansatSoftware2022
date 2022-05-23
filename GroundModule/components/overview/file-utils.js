@@ -1,8 +1,8 @@
 const readline = require('readline');
 const fs = require('fs');
 
-const CONTAINER_TELEMETRY_FILE_NAME = 'Flight_6082_C.csv'
-const PAYLOAD_TELEMETRY_FILE_NAME = 'Flight_6082_T.csv'
+const CONTAINER_TELEMETRY_FILE_NAME = 'Flight_1082_C.csv'
+const PAYLOAD_TELEMETRY_FILE_NAME = 'Flight_1082_T.csv'
 var containerTelemetryWriteStream = fs.createWriteStream('telemetry/' + CONTAINER_TELEMETRY_FILE_NAME, {flags:'w'});
 var payloadTelemetryWriteStream = fs.createWriteStream('telemetry/' + PAYLOAD_TELEMETRY_FILE_NAME, {flags:'w'});
 

@@ -1,4 +1,4 @@
-  # Authors: Paul Cunnane 2016, Peter Dahlebrg 2016
+# Authors: Paul Cunnane 2016, Peter Dahlebrg 2016
 #
 # This module borrows from the Adafruit BME280 Python library. Original
 # Copyright notices are reproduced below.
@@ -201,15 +201,3 @@ class BME280:
         hd = h * 100 // 1024 - hi * 100
         return ("{}C".format(t / 100), "{}.{:02d}hPa".format(pi, pd),
                 "{}.{:02d}%".format(hi, hd))
-© 2022 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
