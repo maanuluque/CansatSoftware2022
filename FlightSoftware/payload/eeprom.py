@@ -41,7 +41,6 @@ def get(field):
     with open("eeprom.json", "r") as eeprom:
         json_variables = json.load(eeprom)
     variables = json.loads(json_variables)
-    print("Retrieved value: " + variables[field])
     return variables[field]
 
 def get_all():

@@ -9,11 +9,11 @@ from time import sleep_ms
 DELTA_ALT = 0.5
 
 # BME
-i2c = machine.I2C(0, scl=machine.Pin(21), sda=machine.Pin(20))
+i2c = machine.I2C(1, scl=machine.Pin(7), sda=machine.Pin(6))
 bme = bme280.BME280(i2c=i2c)
 
 # MPU
-i2c2 = machine.I2C(1, scl=machine.Pin(3), sda=machine.Pin(2))
+i2c2 = machine.I2C(0, scl=machine.Pin(17), sda=machine.Pin(16))
 mpu = mpu9250.MPU9250(i2c2)
 
 def altitude_is_equal(alt1, alt2):
@@ -53,4 +53,5 @@ def get_temperature():
     return bme.values[0]
 
 def get_gyro_data():
-    return mpu.gyro, mpu.acceleration, mpu.magnetic, mpu.temperature
+    return (mpu.gyro, mpu.acceleration, mpu.magnetic, mpu.temperature)
+

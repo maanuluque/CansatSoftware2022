@@ -9,7 +9,7 @@ import ubinascii
 from electromechanical import em
 
 #cos.remove("journal.txt")
-os.remove("eeprom.json")
+#os.remove("eeprom.json")
 
 # Init
 rtc = RTC_DS3231.RTC(port=1, sda_pin=14, scl_pin=15)
@@ -30,7 +30,7 @@ CONVERSION_FACTOR = 3.3 / 65535
 
 
 GROUND_MAC = ubinascii.unhexlify("0013A20041BA29C8")
-GROUND_IP = ubinascii.unhexlify("CC30")
+GROUND_IP = ubinascii.unhexlify("515C")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -53,6 +53,9 @@ last_altitude = None
 sim_pressure = None
 altitude_list = []
 altitude = 0
+
+pin_led = machine.Pin(25, machine.Pin.OUT)
+bool_led = False
 
 def setup():
     if simulation_mode == 'True':
@@ -112,44 +115,53 @@ def recieve_command():
     if command != 0:
         packet = xbee.wait_for_frame()
         #print("PACKET --> {}".format(packet.get_frame_data()))
-        data = packet.get_frame_data().split(',')
-        # Check if command / simp
-        packet_type = data[0]
-        if packet_type == 'CMD':
-            last_command = data[2]
+        frame_type = packet.get_frame_type()
+        if (frame_type == 0x90 or frame_type == 0x91):
+            data = packet.get_frame_data().split(',')
+            # Check if command / simp
+            packet_type = data[0]
+            if packet_type == 'CMD':
+                last_command = data[2]
             
-            if last_command == 'CX':
-                if send_telemetry == 'False':
-                    send_telemetry = 'True'
-                elif send_telemetry == 'True':
-                    send_telemetry = 'False'
-                eeprom.modify('send_telemetry', send_telemetry)
+                if last_command == 'CX':
+                    if send_telemetry == 'False':
+                        send_telemetry = 'True'
+                    elif send_telemetry == 'True':
+                        send_telemetry = 'False'
+                    eeprom.modify('send_telemetry', send_telemetry)
                 
-            elif last_command == 'ST':
-                time = data[3]
-                rtc.DS3231_SetTime(NowTime = time)
+                elif last_command == 'ST':
+                    time = data[3]
+                    rtc.DS3231_SetTime(NowTime = time)
                 
-            elif last_command == 'SIM':
-                print("SIM Command Recieved.")
-                if simulation_mode == 'False':
-                    simulation_mode = 'True'
-                elif simulation_mode == 'True':
-                    simulation_mode = 'False'
-                eeprom.modify('simulation_mode', simulation_mode)
+                elif last_command == 'SIM':
+                    #print("SIM Command Recieved.")
+                    if simulation_mode == 'False':
+                        simulation_mode = 'True'
+                    elif simulation_mode == 'True':
+                        simulation_mode = 'False'
+                    eeprom.modify('simulation_mode', simulation_mode)
 
-            elif last_command == 'SIMP':
-                print("READING FROM SIMP")
-                sim_pressure = data[3]
+                elif last_command == 'SIMP':
+                    #print("READING FROM SIMP")
+                    sim_pressure = data[3]
                 
-            elif last_command == 'TPX':
-                if send_payload_telemetry == 'False':
-                    send_payload_telemetry = 'True'
-                elif send_payload_telemetry == 'True':
-                    send_payload_telemetry = 'False'
-                eeprom.modify('send_payload_telemetry', send_payload_telemetry)
+                elif last_command == 'TPX':
+                    if send_payload_telemetry == 'False':
+                        send_payload_telemetry = 'True'
+                    elif send_payload_telemetry == 'True':
+                        send_payload_telemetry = 'False'
+                    eeprom.modify('send_payload_telemetry', send_payload_telemetry)
     
 setup()
 while(True):
+    time.sleep(1)
+    if (bool_led == True):
+        pin_led.high()
+        bool_led = False
+    else:
+        pin_led.low()
+        bool_led = True
     recieve_command()
     last_altitude = altitude
     
@@ -200,7 +212,7 @@ while(True):
         #current_time = time.ticks_ms()
         #if current_time - payload_prev_time > DELTA_TIME_PAYLOAD:
             # poll and relay payload telemetry
-            print("Sending PAYLOAD package to Ground......")
+            #print("Sending PAYLOAD package to Ground......")
             
         # Check for LANDED state
         landed = sensors.check_for_landed(altitude_list)
@@ -224,8 +236,9 @@ while(True):
         prev_time = current_time
         #print("Sending CONTAINER package to Ground......")
         package = set_container_package(altitude)
-        print("Altitude is: " + str(altitude))
+        #print("Altitude is: " + str(altitude))
         eeprom.store_journal(package)
         eeprom.update_pc()
         xbee.send_packet(0, GROUND_MAC, GROUND_IP, package)
+        
         
