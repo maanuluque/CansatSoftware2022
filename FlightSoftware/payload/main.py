@@ -7,7 +7,7 @@ from electromechanical import em
 import ubinascii
 
 # Init
-xbee = uxbee.Uxbee(tx = 0, rx = 1, timeout = 250)
+xbee = uxbee.Uxbee(channel = 0, tx = 0, rx = 1, timeout = 250)
 electro = em.EM()
 
 # Defines
@@ -16,7 +16,7 @@ ALTITUDES_LIST_SIZE = 10
 
 
 CONTAINER_MAC = ubinascii.unhexlify("0013A2004191C55C")
-CONTAINER_IP = ubinascii.unhexlify("C096")
+CONTAINER_IP = ubinascii.unhexlify("FB11")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -26,6 +26,7 @@ package_count = eeprom_variables["package_count"]
 entry = True
 prev_time = time.ticks_ms()
 altitude_list = []
+bool_led = True
 
 def set_payload_package(time, payload_state):
     separator = ','
@@ -65,6 +66,12 @@ def set_payload_package(time, payload_state):
 
 while True:
     time.sleep(1)
+    if (bool_led == True):
+        pin_led.high()
+        bool_led = False
+    else:
+        pin_led.low()
+        bool_led = True
     if xbee.read_command() != 0:
         packet = xbee.wait_for_frame()
         frame_type = packet.get_frame_type()
