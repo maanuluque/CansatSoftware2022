@@ -185,7 +185,6 @@ def recieve_command():
     
 setup()
 while(True):
-    time.sleep(0.05)
     if (bool_led == True):
         pin_led.high()
         bool_led = False
@@ -261,7 +260,7 @@ while(True):
         # Poll and relay payload telemetry
         payload_prev_time = current_time
         package = set_payload_package(tp_released, tp_is_descending)
-        print("SENDING TO PAYLOAD... {}".format(package))
+        #print("SENDING TO PAYLOAD... {}".format(package))
         # Store in eeprom?
         payload_xbee.send_packet(0, PAYLOAD_MAC, PAYLOAD_IP, package)
             

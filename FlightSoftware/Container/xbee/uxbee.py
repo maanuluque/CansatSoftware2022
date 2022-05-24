@@ -39,10 +39,8 @@ class Uxbee:
                 return None
             
             if (next_byte != b'~'):
-                print("NEXT_BYTE: {}".format(next_byte))
                 xbee_packet += next_byte
             else:
-                print("NEXT_BYTE !!!!!!!!: {}".format(next_byte))
                 new_packet = bytearray()
                 new_packet += next_byte
                 return self.wait_for_packet_length(new_packet)
@@ -53,10 +51,8 @@ class Uxbee:
             return None
         
         if (checksum != b'~'):
-            print("NEXT_BYTE: {}".format(checksum))
             xbee_packet += checksum
         else:
-            print("NEXT_BYTE !!!!!!!!: {}".format(checksum))
             new_packet = bytearray()
             new_packet += checksum
             return self.wait_for_packet_length(new_packet)
@@ -66,12 +62,8 @@ class Uxbee:
     
     def get_packet(self, packet_bytearray, checksum):
         frame_type = packet_bytearray[3]
-        print("RAW PACKET READ: {}".format(packet_bytearray))
-        #print("FRAME TYPE --> {}".format(frame_type))
         if (frame_type == 0x90):
             packet = ReceivePacket.create_packet(packet_bytearray)
-            print("READ CHECKSUM: {}".format(checksum))
-            print("PACKET CHECKSUM: {}".format(packet.get_checksum()))
             if (packet.get_checksum() == sum(checksum)):
                 return packet
             else:
@@ -86,12 +78,8 @@ class Uxbee:
             return None
         
     def send_packet(self, frame_id, x64bit_addr, x16bit_addr, data):
-        #print("XBEE: Data --> " + data)
         data = data.encode("utf-8")
-        #print("XBEE: Encoded Data --> {}".format(data))
         packet = TransmitPacket(frame_id, x64bit_addr, x16bit_addr, 0, 0, data)
-        print("SENDING RAW: {}".format(packet.output()))
-        #print("XBEE: Packet --> {}".format(packet.output()))
         self.uart.write(packet.output())
         
     def get_received(self):
