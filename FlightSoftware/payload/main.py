@@ -1,14 +1,18 @@
 import os
 import eeprom
+import machine
 from sensor import sensors
 import time
 from xbee import uxbee
 from electromechanical import em
 import ubinascii
 
+#os.remove("journal.txt")
+
 # Init
 xbee = uxbee.Uxbee(channel = 0, tx = 0, rx = 1, timeout = 250)
 electro = em.EM()
+pin_led = machine.Pin(25, machine.Pin.OUT)
 
 # Defines
 TEAM_ID = 1082
@@ -16,7 +20,7 @@ ALTITUDES_LIST_SIZE = 10
 
 
 CONTAINER_MAC = ubinascii.unhexlify("0013A2004191C55C")
-CONTAINER_IP = ubinascii.unhexlify("FB11")
+CONTAINER_IP = ubinascii.unhexlify("DF27")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -65,7 +69,6 @@ def set_payload_package(time, payload_state):
     return separator.join(package)
 
 while True:
-    time.sleep(1)
     if (bool_led == True):
         pin_led.high()
         bool_led = False
@@ -74,14 +77,19 @@ while True:
         bool_led = True
     if xbee.read_command() != 0:
         packet = xbee.wait_for_frame()
-        frame_type = packet.get_frame_type()
-        if (frame_type == 0x90 or frame_type == 0x91):
-            data = packet.get_frame_data()
-            data_split = data.split('-')
-            package = set_payload_package(data_split[0], data_split[1])
-            eeprom.store_journal(package)
-            eeprom.update_pc()
-            xbee.send_packet(0, CONTAINER_MAC, CONTAINER_IP, package)
+        if (packet != None):
+            frame_type = packet.get_frame_type()
+            if (frame_type == 0x90 or frame_type == 0x91):
+                data = packet.get_frame_data()
+                data_split = data.split('-')
+                package = set_payload_package(data_split[0], data_split[1])
+                eeprom.store_journal(package)
+                eeprom.update_pc()
+                xbee.send_packet(0, CONTAINER_MAC, CONTAINER_IP, package)
+                
+    #else:
+    #    print("No read")
     # stabilize
+
 
 

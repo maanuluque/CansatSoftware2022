@@ -8,8 +8,9 @@ from xbee import uxbee
 import ubinascii
 from electromechanical import em
 
-#cos.remove("journal.txt")
+#os.remove("journal.txt")
 #os.remove("eeprom.json")
+
 
 # Init
 rtc = RTC_DS3231.RTC(port=1, sda_pin=14, scl_pin=15)
@@ -31,10 +32,10 @@ CONVERSION_FACTOR = 3.3 / 65535
 
 
 GROUND_MAC = ubinascii.unhexlify("0013A20041BA29C8")
-GROUND_IP = ubinascii.unhexlify("607A")
+GROUND_IP = ubinascii.unhexlify("7654")
 
 PAYLOAD_MAC = ubinascii.unhexlify("0013A20041B11802")
-PAYLOAD_IP = ubinascii.unhexlify("4358")
+PAYLOAD_IP = ubinascii.unhexlify("4AE6")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -123,16 +124,18 @@ def set_payload_package(tp_released, tp_is_descending):
 def receive_payload_package():
     command = payload_xbee.read_command()
     if command != 0:
-        print('Received from Payload!')
+        #print('Received from Payload!')
         packet = payload_xbee.wait_for_frame()
         if packet != None:
             frame_type = packet.get_frame_type()
             if (frame_type == 0x90 or frame_type == 0x91):
+                #print("Received from Payload: {}".format(packet.output()))
                 # Get/Parse something?
                 data = packet.get_frame_data()
-                print("Data: {}".format(data))
+                # print("Data: {}".format(data))
                 # Eeprom modify?
                 xbee.send_packet(0, GROUND_MAC, GROUND_IP, data)
+                #print("Retransmited PAYLOAD to GROUND")
             
 
 def recieve_command():
@@ -152,7 +155,8 @@ def recieve_command():
                 packet_type = data[0]
                 if packet_type == 'CMD':
                     last_command = data[2]
-            
+                    #print("RECIEVED " + str(last_command) + " from GROUND")
+
                     if last_command == 'CX':
                         if send_telemetry == 'False':
                             send_telemetry = 'True'
@@ -192,7 +196,10 @@ while(True):
         pin_led.low()
         bool_led = True
     recieve_command()
-    receive_payload_package()
+    
+    if send_payload_telemetry == "True":
+        receive_payload_package()
+        
     last_altitude = altitude
     
     if simulation_mode == "False":
@@ -226,6 +233,7 @@ while(True):
         #print("DEPLOY state")
         if entry and eeprom.get("tp_is_descending") == "False":
             # activar servo para desenrollar payload
+            electro.release_payload()
             entry = False
             tp_deploy_time = time.ticks_ms()
             tp_released = "True"
@@ -256,24 +264,23 @@ while(True):
 
     current_time = time.ticks_ms()
     
-    if current_time - payload_prev_time > DELTA_TIME_PAYLOAD:
+    if (send_payload_telemetry == "True" and (current_time - payload_prev_time > DELTA_TIME_PAYLOAD)):
         # Poll and relay payload telemetry
         payload_prev_time = current_time
         package = set_payload_package(tp_released, tp_is_descending)
-        #print("SENDING TO PAYLOAD... {}".format(package))
+        #print("Polling to PAYLOAD... {}".format(package))
         # Store in eeprom?
         payload_xbee.send_packet(0, PAYLOAD_MAC, PAYLOAD_IP, package)
             
             
-    print("Time passed: " + str(current_time - prev_time))
-    print(current_time - prev_time > DELTA_TIME)
-    if current_time - prev_time > DELTA_TIME and send_telemetry == "True":
+    #print("Time passed: " + str(current_time - prev_time))
+    # print(current_time - prev_time > DELTA_TIME)
+    if (send_telemetry == "True" and (current_time - prev_time > DELTA_TIME)):
         prev_time = current_time
         package = set_container_package(altitude)
         #print("SENDING TO GROUND... {}".format(package))
         #print("Altitude is: " + str(altitude))
         eeprom.store_journal(package)
-        #eeprom.update_pc()
+        eeprom.update_pc()
         xbee.send_packet(0, GROUND_MAC, GROUND_IP, package)
-        
-        
+        #print("Transmited from CONTAINER to GROUND")

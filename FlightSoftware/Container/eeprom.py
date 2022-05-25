@@ -21,7 +21,7 @@ def create():
         "simulation_mode": "False",
         "hasReachApogee": "False",
         "tp_released": "False",
-        "send_payload_telemetry": "False",
+        "send_payload_telemetry": "True",
         "tp_is_descending": "False",
         "parachute_deployed": "False"
     }
@@ -62,4 +62,5 @@ def get_all():
 def update_pc():
     pc = int(get("package_count"))
     modify("package_count", str(pc+1))
+
 
