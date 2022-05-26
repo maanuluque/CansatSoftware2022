@@ -7,6 +7,7 @@ from time import sleep_ms
 
 ## Initialization
 DELTA_ALT = 0.5
+MAX_PRESSURE_VALUES = 20
 
 # BME
 i2c = machine.I2C(0, scl=machine.Pin(21), sda=machine.Pin(20))
@@ -47,3 +48,11 @@ def get_sim_altitude(pressure):
 
 def get_temperature():
     return bme.values[0]
+
+def artificial_sea_level():
+    added = 0
+    for _ in range(MAX_PRESSURE_VALUES):
+        added += bme.read_compensated_data()[1]
+    ans = added / MAX_PRESSURE_VALUES
+    print("NEW SEA LEVEL {}".format(ans))
+    bme.sealevel = ans

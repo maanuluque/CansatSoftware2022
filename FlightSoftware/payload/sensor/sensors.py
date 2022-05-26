@@ -55,3 +55,9 @@ def get_temperature():
 def get_gyro_data():
     return (mpu.gyro, mpu.acceleration, mpu.magnetic, mpu.temperature)
 
+def artificial_sea_level():
+    added = 0
+    for _ in range(MAX_PRESSURE_VALUES):
+        added += bme.read_compensated_data()[1]
+    ans = added / MAX_PRESSURE_VALUES
+    bme.sealevel = ans

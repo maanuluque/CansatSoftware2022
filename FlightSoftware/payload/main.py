@@ -68,6 +68,7 @@ def set_payload_package(time, payload_state):
     
     return separator.join(package)
 
+sensors.artificial_sea_level()
 while True:
     if (bool_led == True):
         pin_led.high()

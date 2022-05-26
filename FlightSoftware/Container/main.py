@@ -29,13 +29,14 @@ PAYLOAD_DESCEND_TIME = 20000
 TEAM_ID = 1082
 ALTITUDES_LIST_SIZE = 10
 CONVERSION_FACTOR = 3.3 / 65535
+NICROM_TIME_ON = 3000
 
 
 GROUND_MAC = ubinascii.unhexlify("0013A20041BA29C8")
-GROUND_IP = ubinascii.unhexlify("7654")
+GROUND_IP = ubinascii.unhexlify("9802")
 
 PAYLOAD_MAC = ubinascii.unhexlify("0013A20041B11802")
-PAYLOAD_IP = ubinascii.unhexlify("4AE6")
+PAYLOAD_IP = ubinascii.unhexlify("CC30")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -59,11 +60,15 @@ last_altitude = None
 sim_pressure = None
 altitude_list = []
 altitude = 0
+nicrom_parachute = False
+nicrom_payload = False
+nicrom_time = 0
 
 pin_led = machine.Pin(25, machine.Pin.OUT)
 bool_led = False
 
 def setup():
+    sensors.artificial_sea_level()
     if simulation_mode == 'True' and sim_activated == 'True':
         sim_pressure = uxbee.wait_for_simp()
         altitude = sensors.get_sim_altitude(sim_pressure)
@@ -224,20 +229,37 @@ while(True):
     if current_state == "PRE-DEPLOY":
         #print("PRE-DEPLOY state")        
         if parachute_deployed == "False" and altitude < SECOND_PARACHUTE_ALTITUDE and sensors.flight_state(altitude_list) == "descending" and hasReachApogee == "True":
-            electro.release_parachute()
             parachute_deployed = "True"
             eeprom.modify("parachute_deployed", "True")
+            electro.parachute_nicrom_on()
+            nicrom_parachute = True
+            nicrom_time = time.ticks_ms()
+        
+        if nicrom_parachute == True:
+            current_time = time.ticks_ms()
+            if ((current_time - nicrom_time) > NICROM_TIME_ON):
+                electro.parachute_nicrom_off()
+                nicrom_parachute = False
 
-        if altitude < PAYLOAD_DEPLOY_ALTITUDE and sensors.flight_state(altitude_list) == "descending" and hasReachApogee == "True":
-            current_state = "DEPLOY"
-            eeprom.modify("current_state", "DEPLOY")
-            entry = True
+        if altitude < PAYLOAD_DEPLOY_ALTITUDE and sensors.flight_state(altitude_list) == "descending" and hasReachApogee == "True" and nicrom_payload == False:
+            electro.payload_nicrom_on()
+            nicrom_payload = True
+            nicrom_time = time.ticks_ms()
+         
+        if nicrom_payload == True:
+            current_time = time.ticks_ms()
+            if ((current_time - nicrom_time) > NICROM_TIME_ON):
+                electro.payload_nicrom_off()
+                nicrom_payload = False 
+                entry = True
+                current_state = "DEPLOY"
+                eeprom.modify("current_state", "DEPLOY")
 
     elif current_state == "DEPLOY":
         #print("DEPLOY state")
         if entry and eeprom.get("tp_is_descending") == "False":
             # activar servo para desenrollar payload
-            electro.release_payload()
+            electro.start_motor()
             entry = False
             tp_deploy_time = time.ticks_ms()
             tp_released = "True"
@@ -246,8 +268,9 @@ while(True):
             eeprom.modify("tp_deploy_time", str(tp_deploy_time))
             eeprom.modify("tp_is_descending", "True")
         
-        if tp_is_descending == "True" and time.ticks_ms - tp_deploy_time > PAYLOAD_DESCEND_TIME:
+        if (tp_is_descending == "True" and ((time.ticks_ms() - tp_deploy_time) > PAYLOAD_DESCEND_TIME)):
             # stop servo
+            electro.stop_motor()
             tp_is_descending = "False"
             eeprom.modify("tp_is_descending", "False")
             
