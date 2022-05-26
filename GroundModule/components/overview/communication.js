@@ -17,7 +17,7 @@ var xbeeAPI = new xbee_api.XBeeAPI({
   api_mode: 1
 });
 
-var serialport = new SerialPort({ path: "/dev/tty.usbserial-A50285BI", baudRate: 9600, parser: xbeeAPI.rawParser()})
+var serialport = new SerialPort({ path: "/dev/ttyUSB0", baudRate: 9600, parser: xbeeAPI.rawParser()})
 
 // var serialport = new SerialPort("COM3", {
 //   baudRate: 9600,
@@ -96,7 +96,7 @@ function getUtcTimeStr() {
 function parsePacketAndAddValues(content) {
   const telemetryElements = content.split(',');
   if (telemetryElements.length === 16) { // Received container telemetry
-    addValueToTelemetryChart(containerTelemetryChart, Number(telemetryElements[6]), telemetryElements[1]);
+    addValueToTelemetryChart(0, Number(telemetryElements[6]), telemetryElements[1]);
     addValueToTelemetryCsv(containerTelemetryWriteStream, content);
     setCurrentTemperature('container-telemetry-temperature', telemetryElements[7]);
     setCurrentBatteryVoltage('container-telemetry-battery-voltage', telemetryElements[8]);
@@ -104,7 +104,7 @@ function parsePacketAndAddValues(content) {
     publishMQTTMessage(content);
   } else { // Received payload telemetry
       telemetryElements[1] = getUtcTimeStr();
-      addValueToTelemetryChart(payloadTelemetryChart, Number(telemetryElements[4]), telemetryElements[1]);
+      addValueToTelemetryChart(1, Number(telemetryElements[4]), telemetryElements[1]);
       addValueToTelemetryCsv(payloadTelemetryWriteStream, content);
       setCurrentTemperature('payload-telemetry-temperature', telemetryElements[5]);
       setCurrentRotationRate('payload-telemetry-rotation-rate', telemetryElements[7]); //uso gyro_r

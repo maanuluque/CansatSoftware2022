@@ -41,6 +41,11 @@ body {
   max-width: 35%;
 }
 
+.telemetry-data-div {
+  display: flex;
+  flex-direction: column;
+}
+
 .telemetry-overview-status-bar {
   display: flex;
   flex-direction: row;

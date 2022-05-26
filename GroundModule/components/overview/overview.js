@@ -1,70 +1,38 @@
 const chartjs = require('chart.js');
 
+let label_length = 0;
+let last_payload = 0;
+let last_container = 0;
+let offset = 0;
+
 //'rgb(92,94,93)', //Gray
 //'rgb(255, 99, 132)', //Red
 //'rgb(54, 162, 235)', //Blue
 
-const containerTelemetryChartConfig = {
+const telemetryChartConfig = {
   type: 'line',
   data: {
-    labels: ['00:00:00'],
+    labels: [],
     datasets: [{
-      label: 'Altitude',
+      label: 'Container',
       backgroundColor: 'rgb(255, 99, 132)', //Red
       borderColor: 'rgb(255, 99, 132)', //Red
-      data: [0],
+      data: [],
       fill: false,
-    }]
+    },
+    {
+      label: 'Payload',
+      backgroundColor: 'rgb(120, 0, 120)',
+      borderColor: 'rgb((120, 0, 120)',
+      data: [],
+      fill: false,
+    },
+    ]
   },
   options: {
     responsive: true,
     mantainAspectRation: false,
-    title: {
-      display: true,
-      text: 'Container'
-    },
-    tooltips: {
-      mode: 'index',
-      intersect: false,
-    },
-    hover: {
-      mode: 'nearest',
-      intersect: true
-    },
-    scales: {
-      xAxes: [{
-        display: true,
-        scaleLabel: {
-          display: true,
-          labelString: 'Mission Time (hh/mm/ss)'
-        }
-      }],
-      yAxes: [{
-        display: true,
-        scaleLabel: {
-          display: true,
-          labelString: 'Altitude (m)'
-        }
-      }]
-    }
-  }
-};
-
-const payloadTelemetryChartConfig = {
-  type: 'line',
-  data: {
-    labels: ['00:00:00'],
-    datasets: [{
-      label: 'Altitude',
-      backgroundColor: 'rgb(255, 99, 132)', //Red
-      borderColor: 'rgb(255, 99, 132)', //Red
-      data: [0],
-      fill: false,
-    }]
-  },
-  options: {
-    responsive: true,
-    mantainAspectRation: false,
+    spanGaps: true,
     title: {
       display: true,
       text: 'Payload'
@@ -97,22 +65,41 @@ const payloadTelemetryChartConfig = {
 };
 
 
-containerTelemetryCanvasCtx = document.getElementById('container-telemetry-canvas').getContext('2d');
-containerTelemetryChart = new chartjs.Chart(containerTelemetryCanvasCtx, containerTelemetryChartConfig);
+telemetryCanvasCtx = document.getElementById('telemetry-canvas').getContext('2d');
+telemetryChart = new chartjs.Chart(telemetryCanvasCtx, telemetryChartConfig);
 
-payloadTelemetryCanvasCtx = document.getElementById('payload-telemetry-canvas').getContext('2d');
-payloadTelemetryChart = new chartjs.Chart(payloadTelemetryCanvasCtx, payloadTelemetryChartConfig);
-
-
-function addValueToTelemetryChart(chart, value, label) {
-  chart.data.datasets[0].data.push(value);
-  chart.data.labels.push(label);
-  if (chart.data.labels.length > 20) {
-    chart.data.datasets[0].data.shift();
-    chart.data.labels.shift();
+function addValueToTelemetryChart(index, value, label) {
+  if (label_length == 0)
+    offset = value;
+    if (offset < 0)
+      offset *= -1;
+    
+  if (index == 1) {
+    if (last_payload == label_length) {
+      telemetryChart.data.labels.push(label);
+      label_length++;
+    } 
+    telemetryChart.data.datasets[index].data[label_length - 1] = value + offset - 30;
+    last_payload = label_length
+    console.log("PAYLOAD: " + telemetryChart.data.datasets[1].data.toString());
+  } else {
+    if (last_container == label_length) {
+      telemetryChart.data.labels.push(label);
+      label_length++;
+    }
+    telemetryChart.data.datasets[index].data[label_length - 1] = value + offset;
+    last_container = label_length;
+    console.log("CONTAINER: " + telemetryChart.data.datasets[0].data.toString());
   }
-  console.log(chart);
-  chart.update();
+  
+  // if (telemetryChart.data.labels.length > 20) {
+  //   telemetryChart.data.datasets[0].data.shift();
+  //   telemetryChart.data.datasets[1].data.shift();
+  //   telemetryChart.data.labels.shift();
+  // }
+  
+  
+  telemetryChart.update();
 }
 
 function sendCustomCommand() {
