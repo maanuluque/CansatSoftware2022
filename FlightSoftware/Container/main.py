@@ -42,6 +42,7 @@ eeprom_variables = eeprom.get_all()
 send_telemetry = eeprom_variables["send_telemetry"]
 package_count = eeprom_variables["package_count"] 
 simulation_mode = eeprom_variables["simulation_mode"]
+sim_activated = eeprom_variables["sim_activated"]
 current_state = eeprom_variables["current_state"]
 hasReachApogee = eeprom_variables["hasReachApogee"]
 tp_released = eeprom_variables["tp_released"]
@@ -63,7 +64,7 @@ pin_led = machine.Pin(25, machine.Pin.OUT)
 bool_led = False
 
 def setup():
-    if simulation_mode == 'True':
+    if simulation_mode == 'True' and sim_activated == 'True':
         sim_pressure = uxbee.wait_for_simp()
         altitude = sensors.get_sim_altitude(sim_pressure)
     else:
@@ -169,12 +170,16 @@ def recieve_command():
                         rtc.DS3231_SetTime(NowTime = time)
                 
                     elif last_command == 'SIM':
-                        #print("SIM Command Recieved.")
-                        if simulation_mode == 'False':
+                        sim_command = data[3]
+                        if sim_command == "ENABLE":
                             simulation_mode = 'True'
-                        elif simulation_mode == 'True':
+                        elif sim_command == 'ACTIVATE':
+                            sim_activated = 'True'
+                        elif sim_command == 'DISABLE':
                             simulation_mode = 'False'
+                            sim_activated = 'False'
                         eeprom.modify('simulation_mode', simulation_mode)
+                        eeprom.modify('sim_activated', sim_activated)
 
                     elif last_command == 'SIMP':
                         #print("READING FROM SIMP")
@@ -202,11 +207,10 @@ while(True):
         
     last_altitude = altitude
     
-    if simulation_mode == "False":
-        altitude = sensors.get_altitude()
-        #print("Current altitude: " + str(altitude))
-    else:
+    if simulation_mode == 'True' and sim_activated == 'True':
         altitude = sensors.get_sim_altitude(sim_pressure)
+    else:
+        altitude = sensors.get_altitude()
     altitude_list.append(altitude)
     if len(altitude_list) > ALTITUDES_LIST_SIZE:
         altitude_list.pop(0)
@@ -242,7 +246,7 @@ while(True):
             eeprom.modify("tp_deploy_time", str(tp_deploy_time))
             eeprom.modify("tp_is_descending", "True")
         
-        if descend_payload == "True" and time.ticks_ms - tp_deploy_time > PAYLOAD_DESCEND_TIME:
+        if tp_is_descending == "True" and time.ticks_ms - tp_deploy_time > PAYLOAD_DESCEND_TIME:
             # stop servo
             tp_is_descending = "False"
             eeprom.modify("tp_is_descending", "False")

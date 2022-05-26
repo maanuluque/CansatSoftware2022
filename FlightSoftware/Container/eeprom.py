@@ -19,6 +19,7 @@ def create():
         "send_telemetry": "True",
         "package_count": "0",
         "simulation_mode": "False",
+        "sim_activated": "False",
         "hasReachApogee": "False",
         "tp_released": "False",
         "send_payload_telemetry": "True",
