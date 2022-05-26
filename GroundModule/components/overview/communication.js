@@ -85,7 +85,7 @@ function sendCommand(cmdData) {
 }
 
 function sendContainerSetTimeCommand(){
-  sendCommand('CMD,ST,' + getUtcTimeStr());
+  sendCommand('CMD,1082,ST,' + getUtcTimeStr());
 }
 
 function getUtcTimeStr() {
