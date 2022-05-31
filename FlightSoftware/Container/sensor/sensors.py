@@ -6,8 +6,9 @@ from sensor import mpu9250
 from time import sleep_ms
 
 ## Initialization
-DELTA_ALT = 0.5
-MAX_PRESSURE_VALUES = 20
+DELTA_ALT = 10
+DELTA_EQ = 2
+MAX_PRESSURE_VALUES = 50
 
 # BME
 i2c = machine.I2C(0, scl=machine.Pin(21), sda=machine.Pin(20))
@@ -15,7 +16,7 @@ bme = bme280.BME280(i2c=i2c)
 
 def altitude_is_equal(alt1, alt2):
     diff = alt1 - alt2
-    if abs(diff) < DELTA_ALT:
+    if abs(diff) < DELTA_EQ:
         return True
     return False
 
@@ -38,7 +39,7 @@ def is_ascending(altitude_list):
     return False
 
 def check_for_landed(altitude_list):
-    return altitude_is_equal(altitude_list[-1], altitude_list[0])
+    return altitude_is_equal(altitude_list[-1], altitude_list[0]) #CHANGE
 
 def get_altitude():
     return bme.altitude
@@ -54,5 +55,8 @@ def artificial_sea_level():
     for _ in range(MAX_PRESSURE_VALUES):
         added += bme.read_compensated_data()[1]
     ans = added / MAX_PRESSURE_VALUES
-    print("NEW SEA LEVEL {}".format(ans))
     bme.sealevel = ans
+    return ans
+
+
+

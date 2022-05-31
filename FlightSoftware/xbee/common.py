@@ -156,7 +156,7 @@ class RemoteATCommandPacket(XBeePacket):
         data.append(self.frame_id)
         data += self.x64bit_addr
         data += self.x16bit_addr
-        data += self.tx_options
+        data.append(self.tx_options)
         data += self.cmd
         data += self.param
         return data
@@ -183,3 +183,7 @@ class RemoteATCommandResponsePacket(XBeePacket):
         data.append(self.frame_id)
         data += self.x64bit_addr
         data += self.x16bit_addr
+        data += self.cmd
+        data += self.status
+        data += self.response
+        return data

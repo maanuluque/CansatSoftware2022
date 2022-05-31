@@ -167,6 +167,7 @@ class BME280:
 
     @sealevel.setter
     def sealevel(self, value):
+        print("SETTER HAS BEEN CALLED: {}".format(value))
         if 30000 < value < 120000:  # just ensure some reasonable value
             self.__sealevel = value
 
@@ -177,8 +178,9 @@ class BME280:
         '''
         from math import pow
         try:
-            p = 44330 * (1.0 - pow(self.read_compensated_data()[1] /
-                                   self.__sealevel, 0.1903))
+            #p = 44330 * (1.0 - pow(self.read_compensated_data()[1] /
+             #                      self.__sealevel, 0.1903))
+             p = ((((pow((self.__sealevel/self.read_compensated_data()[1]), 0.19022256)) - 1) * (self.read_compensated_data()[0] + 273.15)) / (0.0065))
         except:
             p = 0.0
         return p
@@ -189,8 +191,7 @@ class BME280:
         '''
         from math import pow
         try:
-            p = 44330 * (1.0 - pow(self.pressure /
-                                   self.__sealevel, 0.1903))
+            p = 44330 * (1.0 - pow(float(pressure) / self.__sealevel, 0.1903))
         except:
             p = 0.0
         return p
@@ -214,3 +215,4 @@ class BME280:
 
         return ("{:.2f}C".format(t), "{:.2f}hPa".format(p/100),
                 "{:.2f}%".format(h))
+

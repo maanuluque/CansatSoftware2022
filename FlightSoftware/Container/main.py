@@ -8,7 +8,7 @@ from xbee import uxbee
 import ubinascii
 from electromechanical import em
 
-#os.remove("journal.txt")
+#os.-+remove("journal.txt")
 #os.remove("eeprom.json")
 
 
@@ -21,22 +21,27 @@ electro = em.EM()
 
 # Defines
 PAYLOAD_DEPLOY_ALTITUDE = 300
-APOGEE_ALTITUDE = 670
+#300
+APOGEE_ALTITUDE = 650
+#650
 SECOND_PARACHUTE_ALTITUDE = 400
+#400
 DELTA_TIME = 1000
 DELTA_TIME_PAYLOAD = 250
-PAYLOAD_DESCEND_TIME = 20000
+PAYLOAD_DESCEND_TIME = 5000
 TEAM_ID = 1082
-ALTITUDES_LIST_SIZE = 10
+ALTITUDES_LIST_SIZE = 5
 CONVERSION_FACTOR = 3.3 / 65535
-NICROM_TIME_ON = 3000
+NICROM_TIME_ON = 4000
+BUZZER_TIME = 1000
+ADD_LIST_TIME = 500
 
 
 GROUND_MAC = ubinascii.unhexlify("0013A20041BA29C8")
-GROUND_IP = ubinascii.unhexlify("9802")
+GROUND_IP = ubinascii.unhexlify("B155")
 
 PAYLOAD_MAC = ubinascii.unhexlify("0013A20041B11802")
-PAYLOAD_IP = ubinascii.unhexlify("CC30")
+PAYLOAD_IP = ubinascii.unhexlify("C096")
 
 ## Startup State - Retrieve all data from EEPROM
 eeprom_variables = eeprom.get_all()
@@ -46,6 +51,7 @@ simulation_mode = eeprom_variables["simulation_mode"]
 sim_activated = eeprom_variables["sim_activated"]
 current_state = eeprom_variables["current_state"]
 hasReachApogee = eeprom_variables["hasReachApogee"]
+isDescending = eeprom_variables["isDescending"]
 tp_released = eeprom_variables["tp_released"]
 send_payload_telemetry = eeprom_variables["send_payload_telemetry"]
 tp_is_descending = eeprom_variables["tp_is_descending"]
@@ -59,21 +65,36 @@ last_command = "None"
 last_altitude = None
 sim_pressure = None
 altitude_list = []
+add_list_time = 0
 altitude = 0
 nicrom_parachute = False
 nicrom_payload = False
 nicrom_time = 0
+artificial_sealevel = 0
+print_tick = 0
+buzzer_time = 0
+offset = 0
 
 pin_led = machine.Pin(25, machine.Pin.OUT)
 bool_led = False
 
 def setup():
-    sensors.artificial_sea_level()
+    global sim_pressure
+    global offset
     if simulation_mode == 'True' and sim_activated == 'True':
-        sim_pressure = uxbee.wait_for_simp()
+        sim_pressure = xbee.wait_for_simp()
+        print("SIM PRESSURE: {}".format(sim_pressure))
         altitude = sensors.get_sim_altitude(sim_pressure)
-    else:
+        print("SIM ALTITUDE: {}".format(altitude))
+    else: 
+        #artificial_sealevel = sensors.artificial_sea_level()
         altitude = sensors.get_altitude()
+        if (altitude < 0):
+            print("ALTITUDE: {}".format(altitude))
+            offset = altitude * -1
+            print("OFFSET: {}".format(offset))
+            altitude += offset
+            print("ALTITUDE + OFFSET: {}".format(altitude))
         time.sleep_ms(1500)
     altitude_list.append(altitude)
         
@@ -149,6 +170,7 @@ def recieve_command():
     global simulation_mode
     global sim_pressure
     global send_payload_telemetry
+    global sim_activated
     command = xbee.read_command()
     if command != 0:
         packet = xbee.wait_for_frame()
@@ -177,18 +199,23 @@ def recieve_command():
                     elif last_command == 'SIM':
                         sim_command = data[3]
                         if sim_command == "ENABLE":
+                            print("Simulation mode enabled.")
                             simulation_mode = 'True'
                         elif sim_command == 'ACTIVATE':
-                            sim_activated = 'True'
+                            if simulation_mode == 'True':
+                                print("Simulation mode activated.")
+                                sim_activated = 'True'
                         elif sim_command == 'DISABLE':
+                            print("Simulation mode Disabled.")
                             simulation_mode = 'False'
                             sim_activated = 'False'
                         eeprom.modify('simulation_mode', simulation_mode)
                         eeprom.modify('sim_activated', sim_activated)
 
                     elif last_command == 'SIMP':
-                        #print("READING FROM SIMP")
                         sim_pressure = data[3]
+                        #print(data)
+                        #print("Saving SIMP value: " + str(sim_pressure))
                 
                     elif last_command == 'TPX':
                         if send_payload_telemetry == 'False':
@@ -213,53 +240,83 @@ while(True):
     last_altitude = altitude
     
     if simulation_mode == 'True' and sim_activated == 'True':
-        altitude = sensors.get_sim_altitude(sim_pressure)
+        if sim_pressure == None:
+            altitude = sensors.get_sim_altitude(artificial_sealevel)
+        else:
+            altitude = sensors.get_sim_altitude(sim_pressure)
+        #print("Using SIMP altitude: " + str(altitude))
     else:
         altitude = sensors.get_altitude()
-    altitude_list.append(altitude)
+        print("REAL ALTITUDE: {}".format(altitude))
+        altitude += offset
+        if (altitude < 0):
+            altitude = 0
+        
+    if ((time.ticks_ms() - add_list_time) > ADD_LIST_TIME or add_list_time == 0):
+        altitude_list.append(altitude)
+        add_list_time = time.ticks_ms()
+        #print("Altitude List: {}".format(altitude_list))
+        
     if len(altitude_list) > ALTITUDES_LIST_SIZE:
         altitude_list.pop(0)
+        
+    
+    #if (print_tick == 0 or (time.ticks_ms() - print_tick > 1000)):
+    #    print_tick = time.ticks_ms()
+     #   print("Current altitude: {}".format(altitude))
+        
     
     if altitude > APOGEE_ALTITUDE and hasReachApogee == "False":
-        hasReachApogee = True
+        hasReachApogee = "True"
         eeprom.modify("hasReachApogee", "True")
+        print("REACHED APOGEE AT: {}".format(altitude))
         
     #print(sensors.flight_state(altitude_list))
     
     if current_state == "PRE-DEPLOY":
-        #print("PRE-DEPLOY state")        
-        if parachute_deployed == "False" and altitude < SECOND_PARACHUTE_ALTITUDE and sensors.flight_state(altitude_list) == "descending" and hasReachApogee == "True":
-            parachute_deployed = "True"
-            eeprom.modify("parachute_deployed", "True")
-            electro.parachute_nicrom_on()
-            nicrom_parachute = True
-            nicrom_time = time.ticks_ms()
+        #print("PRE-DEPLOY state")
+        if isDescending == "False":
+            if hasReachApogee == "True":
+                if sensors.flight_state(altitude_list) == "descending":
+                    isDescending = "True"
+                    print("IS DESCENDING")
         
-        if nicrom_parachute == True:
-            current_time = time.ticks_ms()
-            if ((current_time - nicrom_time) > NICROM_TIME_ON):
-                electro.parachute_nicrom_off()
-                nicrom_parachute = False
+        else:
+            if parachute_deployed == "False" and altitude < SECOND_PARACHUTE_ALTITUDE:
+                parachute_deployed = "True"
+                eeprom.modify("parachute_deployed", "True")
+                #electro.parachute_nicrom_on()
+                nicrom_parachute = True
+                nicrom_time = time.ticks_ms()
+                print("PARACHUTE DEPLOYED AT: {}".format(altitude))
+        
+            if nicrom_parachute == True:
+                current_time = time.ticks_ms()
+                if ((current_time - nicrom_time) > NICROM_TIME_ON):
+                    #electro.parachute_nicrom_off()
+                    nicrom_parachute = False
+                    print("PARACHUTE NICROM OFF AT: {}".format(altitude))
 
-        if altitude < PAYLOAD_DEPLOY_ALTITUDE and sensors.flight_state(altitude_list) == "descending" and hasReachApogee == "True" and nicrom_payload == False:
-            electro.payload_nicrom_on()
-            nicrom_payload = True
-            nicrom_time = time.ticks_ms()
+            if altitude < PAYLOAD_DEPLOY_ALTITUDE and nicrom_payload == False:
+                #electro.payload_nicrom_on()
+                nicrom_payload = True
+                nicrom_time = time.ticks_ms()
+                print("PAYLOAD NICROM ON: {}".format(altitude))
          
-        if nicrom_payload == True:
-            current_time = time.ticks_ms()
-            if ((current_time - nicrom_time) > NICROM_TIME_ON):
-                electro.payload_nicrom_off()
-                nicrom_payload = False 
-                entry = True
-                current_state = "DEPLOY"
-                eeprom.modify("current_state", "DEPLOY")
+            if nicrom_payload == True:
+                current_time = time.ticks_ms()
+                if ((current_time - nicrom_time) > NICROM_TIME_ON):
+                    #electro.payload_nicrom_off()
+                    nicrom_payload = False 
+                    entry = True
+                    current_state = "DEPLOY"
+                    eeprom.modify("current_state", "DEPLOY")
+                    print("PAYLOAD NICROM OFF: {}".format(altitude))
 
     elif current_state == "DEPLOY":
-        #print("DEPLOY state")
-        if entry and eeprom.get("tp_is_descending") == "False":
+        if entry == True:
             # activar servo para desenrollar payload
-            electro.start_motor()
+            #electro.start_motor()
             entry = False
             tp_deploy_time = time.ticks_ms()
             tp_released = "True"
@@ -267,18 +324,24 @@ while(True):
             eeprom.modify("tp_released", "True")
             eeprom.modify("tp_deploy_time", str(tp_deploy_time))
             eeprom.modify("tp_is_descending", "True")
-        
-        if (tp_is_descending == "True" and ((time.ticks_ms() - tp_deploy_time) > PAYLOAD_DESCEND_TIME)):
-            # stop servo
-            electro.stop_motor()
-            tp_is_descending = "False"
-            eeprom.modify("tp_is_descending", "False")
+            print("PAYLOAD DESCENDING: {}".format(altitude))
+        else:
+            if (tp_is_descending == "True" and ((time.ticks_ms() - tp_deploy_time) > PAYLOAD_DESCEND_TIME)):
+                # stop servo
+                #electro.stop_motor()
+                tp_is_descending = "False"
+                eeprom.modify("tp_is_descending", "False")
+                print("PAYLOAD DESCENDED: {}".format(altitude))
             
         # Check for LANDED state
-        landed = sensors.check_for_landed(altitude_list)
-        if landed:
-            current_state = "LANDED"
-            eeprom.modify("current_state", "LANDED")
+            elif (tp_is_descending == "False"):
+                landed = sensors.check_for_landed(altitude_list)
+                if landed == True:
+                    current_state = "LANDED"
+                    eeprom.modify("current_state", "LANDED")
+                    buzzer_time = time.ticks_ms()
+                    print("LANDED AT: {}".format(altitude))
+            
         
     elif current_state == "LANDED":
         #print("LANDED state")
@@ -287,7 +350,10 @@ while(True):
         eeprom.modify("send_telemetry", "False")
         eeprom.modify("send_payload_telemetry", "False")
         # power on audio beacon
-        exit()
+        if ((time.ticks_ms() - buzzer_time) > BUZZER_TIME):
+            buzzer_time = time.ticks_ms()
+            electro.toggle_buzzer()
+        #exit()
 
     current_time = time.ticks_ms()
     
@@ -307,7 +373,13 @@ while(True):
         package = set_container_package(altitude)
         #print("SENDING TO GROUND... {}".format(package))
         #print("Altitude is: " + str(altitude))
-        eeprom.store_journal(package)
+        #eeprom.store_journal(package)
         eeprom.update_pc()
         xbee.send_packet(0, GROUND_MAC, GROUND_IP, package)
         #print("Transmited from CONTAINER to GROUND")
+
+
+
+
+
+        

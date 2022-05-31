@@ -38,7 +38,11 @@ class Uxbee:
                 print("Lost: {}".format(self.get_lost()))
                 new_packet = bytearray()
                 new_packet += next_byte
-                return self.wait_for_packet_length(new_packet)
+                try:
+                    ans = self.wait_for_packet_length(new_packet)
+                    return ans
+                except:
+                    return None
             
         xbee_packet += length_packet
         length = length_packet[0] << 8 | length_packet[1]
@@ -58,7 +62,11 @@ class Uxbee:
                 print("Lost: {}".format(self.get_lost()))
                 new_packet = bytearray()
                 new_packet += next_byte
-                return self.wait_for_packet_length(new_packet)
+                try:
+                    ans = self.wait_for_packet_length(new_packet)
+                    return ans
+                except:
+                    return None
             
         # Add packet checksum
         checksum = self.read_next_byte()
@@ -72,26 +80,26 @@ class Uxbee:
             print("Lost: {}".format(self.get_lost()))
             new_packet = bytearray()
             new_packet += checksum
-            return self.wait_for_packet_length(new_packet)
+            try:
+                ans = self.wait_for_packet_length(new_packet)
+                return ans
+            except:
+                return None
         
         # Return packet
         return self.get_packet(xbee_packet, checksum)
     
     def get_packet(self, packet_bytearray, checksum):
+        checksum = 0xFF - (sum(packet_bytearray[3:-1]) & 0xFF)
+        if (checksum != packet_bytearray[-1]):
+            self.lost += 1
+            print("Lost: {}".format(self.get_lost()))
+            return None
         frame_type = packet_bytearray[3]
         #print("RAW PACKET READ: {}".format(packet_bytearray))
         #print("FRAME TYPE --> {}".format(frame_type))
         if (frame_type == 0x90):
-            packet = ReceivePacket.create_packet(packet_bytearray)
-            #print("READ CHECKSUM: {}".format(checksum))
-            #print("PACKET CHECKSUM: {}".format(packet.get_checksum()))
-            checksum = 0xFF - (sum(packet_bytearray[3:-1]) & 0xFF)
-            if (checksum == packet_bytearray[-1]):
-                return packet
-            else:
-                self.lost += 1
-                print("Lost: {}".format(self.get_lost()))
-                return None
+            return ReceivePacket.create_packet(packet_bytearray)
         elif (frame_type == 0x91):
             return ExplicitRXIndicatorPacket.create_packet(packet_bytearray)
         elif (frame_type == 0x8B):
@@ -109,6 +117,11 @@ class Uxbee:
         #print("SENDING RAW: {}".format(packet.output()))
         #print("XBEE: Packet --> {}".format(packet.output()))
         self.uart.write(packet.output())
+        
+    def send_remote_at_command(self, frame_id, x64bit_addr, x16bit_addr, options, command, parameter):
+        packet = RemoteATCommandPacket(frame_id, x64bit_addr, x16bit_addr, options, command, parameter)
+        print("About to send".format(packet.output()))
+        #self.uart.write(packet.output())
         
     def get_received(self):
         return self.received
@@ -129,10 +142,17 @@ class Uxbee:
         return current
 
     def wait_for_simp(self):
+        print("Waiting for simp")
         wait = True
         while wait:
             packet = self.wait_for_read()
-            data = packet.get_frame_data().split(',')
-            if data[2] == 'SIMP':
-                wait = False
+            if packet != None:
+                data = packet.get_frame_data().split(',')
+                print("PACKET DATA: {}".format(data))
+                if data[2] == 'SIMP':
+                    wait = False
+        print("Returning: {}".format(data[3]))
         return data[3]
+        
+
+
