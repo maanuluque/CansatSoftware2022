@@ -14,14 +14,10 @@
                 <h3>Container Commands</h3>
                 <button onclick="sendCommand('CMD,1082,CX,ON')">Start Container Telemetry</button>
                 <button onclick="sendCommand('CMD,1082,CX,OFF')">Stop Container Telemetry</button>
-                <button onclick="sendCommand('CMD,1082,TPX,ON')">Start Payload Telemetry</button>
-                <button onclick="sendCommand('CMD,1082,TPX,OFF')">Stop Payload Telemetry</button>  <!-- stop payload necesario? -->
                 <button onclick="sendContainerSetTimeCommand()">Set current container time</button>
                 <button onclick="sendCommand('CMD,1082,SIM,ENABLE')">SIM mode enable</button>
                 <button onclick="sendCommand('CMD,1082,SIM,ACTIVATE')">SIM mode activate</button>
                 <button onclick="sendCommand('CMD,1082,SIM,DISABLE')">SIM mode disable</button>
-                <input id="custom-command-input" type="text" placeholder="Custom Command...">
-                <button onclick="sendCustomCommand()">Send custom command</button>
             </div>
             <div class="column">
                 <h3>Ground controls</h3>

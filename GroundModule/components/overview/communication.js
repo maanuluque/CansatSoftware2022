@@ -4,9 +4,7 @@ var xbee_api = require('xbee-api');
 var C = xbee_api.constants;
 
 //actualizar
-const GROUND_MAC_ADDRESS = '0013A20041BA29C8'; 
 const CONTAINER_MAC_ADDRESS = '0013A20041BA3838';
-const PAYLOAD__MAC_ADDRESS = '0013A20041B11939';
 
 
 var sendSimData = false;
@@ -94,15 +92,26 @@ function getUtcTimeStr() {
 }
 
 function parsePacketAndAddValues(content) {
+  console.log('RECEIVED: ' + content)
   const telemetryElements = content.split(',');
-  if (telemetryElements.length === 16) { // Received container telemetry
+  // FOR DESCENDING PAYLOAD
+  // if (telemetryElements.length >= 2) {
+  //   let speed = telemetryElements[0]
+  //   let step = telemetryElements[1]
+  //   let avg = telemetryElements[4]
+  //   addValueToTelemetryChart(0, Number(speed), Number(step), Number(avg))
+  // }
+  // FOR NORMAL MODE
+  let word = telemetryElements[3]
+  console.log(telemetryElements)
+  if (word === 'C') { // Received container telemetry
     addValueToTelemetryChart(0, Number(telemetryElements[6]), telemetryElements[1]);
     addValueToTelemetryCsv(containerTelemetryWriteStream, content);
     setCurrentTemperature('container-telemetry-temperature', telemetryElements[7]);
     setCurrentBatteryVoltage('container-telemetry-battery-voltage', telemetryElements[8]);
     setCurrentGPSCoords('container-telemetry-gps-coordinates', telemetryElements[10], telemetryElements[11]);
     publishMQTTMessage(content);
-  } else { // Received payload telemetry
+  } else if (word == 'P') { // Received payload telemetry
       telemetryElements[1] = getUtcTimeStr();
       addValueToTelemetryChart(1, Number(telemetryElements[4]), telemetryElements[1]);
       addValueToTelemetryCsv(payloadTelemetryWriteStream, content);

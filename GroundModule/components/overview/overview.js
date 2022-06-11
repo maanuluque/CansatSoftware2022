@@ -15,18 +15,25 @@ const telemetryChartConfig = {
     labels: [],
     datasets: [{
       label: 'Container',
-      backgroundColor: 'rgb(255, 99, 132)', //Red
-      borderColor: 'rgb(255, 99, 132)', //Red
+      borderColor: 'rgb(255, 77, 77)', 
       data: [],
       fill: false,
     },
     {
       label: 'Payload',
-      backgroundColor: 'rgb(120, 0, 120)',
-      borderColor: 'rgb((120, 0, 120)',
+      borderColor: 'rgb(51, 204, 51)',
       data: [],
       fill: false,
     },
+    // For descending payload
+    // {
+    //   label: 'Average',
+    //   borderColor: 'rgb(0, 51, 204)',
+    //   data: [],
+    //   fill: false,
+    //   cubicInterpolationMode: 'monotone',
+    //   tension: 0.4
+    // },
     ]
   },
   options: {
@@ -46,20 +53,20 @@ const telemetryChartConfig = {
       intersect: true
     },
     scales: {
-      xAxes: [{
+      x: {
         display: true,
         scaleLabel: {
           display: true,
           labelString: 'Mission Time (hh/mm/ss)'
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         display: true,
         scaleLabel: {
           display: true,
           labelString: 'Altitude (m)'
         }
-      }]
+      }
     }
   }
 };
@@ -68,7 +75,18 @@ const telemetryChartConfig = {
 telemetryCanvasCtx = document.getElementById('telemetry-canvas').getContext('2d');
 telemetryChart = new chartjs.Chart(telemetryCanvasCtx, telemetryChartConfig);
 
+let counter = 0
+
+// index, value, step, avg
+// index, value, label
 function addValueToTelemetryChart(index, value, label) {
+  // FOR DESCENDING PAYLOAD
+  // telemetryChart.data.labels.push(counter++)
+  // telemetryChart.data.datasets[0].data.push(value * 100)
+  // telemetryChart.data.datasets[1].data.push(step)
+  // telemetryChart.data.datasets[2].data.push(avg * 100)
+
+  // FOR NORMAL MODE
   if (label_length == 0)
     offset = value;
     if (offset < 0)
@@ -79,7 +97,7 @@ function addValueToTelemetryChart(index, value, label) {
       telemetryChart.data.labels.push(label);
       label_length++;
     } 
-    telemetryChart.data.datasets[index].data[label_length - 1] = value + offset - 30;
+    telemetryChart.data.datasets[index].data[label_length - 1] = value;
     last_payload = label_length
     console.log("PAYLOAD: " + telemetryChart.data.datasets[1].data.toString());
   } else {
@@ -87,7 +105,7 @@ function addValueToTelemetryChart(index, value, label) {
       telemetryChart.data.labels.push(label);
       label_length++;
     }
-    telemetryChart.data.datasets[index].data[label_length - 1] = value + offset;
+    telemetryChart.data.datasets[index].data[label_length - 1] = value;
     last_container = label_length;
     console.log("CONTAINER: " + telemetryChart.data.datasets[0].data.toString());
   }
