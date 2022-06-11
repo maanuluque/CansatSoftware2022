@@ -2,7 +2,7 @@ from machine import Pin, PWM
 import time
 
 ## Defines
-loopCount = 100
+BUZZER_FREQ = 2700
 
 class EM:
     def __init__(self):
@@ -22,10 +22,6 @@ class EM:
         self.pwm1 = PWM(pin11)
         
         self.buzzer = False
-        
-        self.pin1.high()
-        self.pin2.low()
-        self.pin3.high()
 
     def parachute_nicrom_on(self):
         self.p12.high()
@@ -39,16 +35,25 @@ class EM:
     def payload_nicrom_off(self):
         self.p13.low()
         
-    def start_motor(self):
-        self.pwm0.duty_u16(2**15)
+    def start_motor(self, value):
+        self.pin1.high()
+        self.pin2.low()
+        self.pin3.high()
+        self.pwm0.duty_u16(value)
+        
+    def start_motor_reverse(self, value):
+        self.pin1.low()
+        self.pin2.high()
+        self.pin3.high()
+        self.pwm0.duty_u16(value)
         
     def stop_motor(self):
         self.pwm0.deinit()
         self.pin1.low()
         self.pin3.low()
         
-    def start_buzzer(self):
-        self.pwm1.freq(2700)
+    def start_buzzer(self, value):
+        self.pwm1.freq(value)
         self.pwm1.duty_u16(32768)
         
     def stop_buzzer(self):
@@ -57,9 +62,12 @@ class EM:
     def toggle_buzzer(self):
         self.buzzer = not self.buzzer
         if (self.buzzer == True):
-            self.start_buzzer()
+            self.start_buzzer(BUZZER_FREQ)
         else:
             self.stop_buzzer()
+
+
+
 
 
 

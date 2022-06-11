@@ -58,5 +58,8 @@ def artificial_sea_level():
     bme.sealevel = ans
     return ans
 
+def set_sea_level(value):
+    bme.sealevel = value
+    return
 
 

@@ -23,7 +23,6 @@ def create():
         "hasReachApogee": "False",
         "isDescending": "False",
         "tp_released": "False",
-        "send_payload_telemetry": "True",
         "tp_is_descending": "False",
         "parachute_deployed": "False"
     }
